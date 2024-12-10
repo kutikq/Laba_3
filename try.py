@@ -1,15 +1,16 @@
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox
 import sys
 
-# Точка входа
-if __name__ in '__main__':
-    # Создание класса приложения
-    app = QApplication(sys.argv)
-    app.setApplicationName('ЙоУ')
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setMinimumSize(1000, 1000)
 
-    # Видимый виджет приложения (пока пустой)
-    w = QWidget()
-    w.show()
+        # Кнопка для вызова диалога
+        button = QPushButton("Начать (выбора нет) ", self)
+        button.setGeometry(100, 100, 200, 50)
+        button.clicked.connect(self.start_drawing)
 
-    # Запуск цикла обработки сообщений
-    app.exec()
+    def start_drawing(self):
+        
+ 
