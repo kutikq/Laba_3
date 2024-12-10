@@ -92,6 +92,22 @@ class MainWindow(QMainWindow):
     
     #выбор разсера пера
     def chose_width(self):
+        """Метод для создания и отображения QSpinBox для выбора размера пера"""
+        # Создаем QSpinBox для выбора размера пера
+        self.size_spinbox = QSpinBox(self)
+        self.size_spinbox.setRange(1, 50)  # Устанавливаем диапазон от 1 до 50
+        self.size_spinbox.setValue(self.pen_width)  # Устанавливаем начальное значение (по умолчанию размер пера 5)
+        
+        # Подключаем событие изменения значения к методу, который обновляет размер пера
+        self.size_spinbox.valueChanged.connect(self.set_pen_size)
+
+        # Показываем QSpinBox на экране
+        self.size_spinbox.show()
+    
+    def set_pen_size(self, value):
+        """Метод для обновления размера пера"""
+        self.pen_width = value  # Обновляем размер пера на основе значения из QSpinBox
+        print(f"Размер пера: {self.pen_width}")
 
 
 
