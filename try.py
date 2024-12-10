@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QColorDialog, QWidget, QVBoxLayout, QToolBar, QColor, QLayout, QSpinBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QColorDialog, QWidget, QVBoxLayout, QToolBar, QLayout, QSpinBox
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPen #для пера
+from PySide6.QtGui import QPainter, QPen, QColor #для пера
 import sys
 
 # Класс для холста (для рисования)
@@ -10,11 +10,12 @@ class Canvas(QWidget):
         self.setAttribute(Qt.WA_StaticContents)
         self.setFixedSize(1000, 1000)
 
-  # инициализация переменных
+        # инициализация переменных
         self.image = self.grab().toImage()
         self.last_point = None
-        self.pen_color = Qt.black
-        self.pen_width = 5
+        self.pen_color = Qt.black  # Начальный цвет пера
+        self.pen_width = 5  # Начальный размер пера
+        self.is_eraser = False  # Начально инструмент не ластик
 
     # иннициализируум мышь
     def mousePressEvent(self, event):
@@ -23,10 +24,16 @@ class Canvas(QWidget):
 
     # Метод для работы пера
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton: #если зажата ЛКМ
-            painter = QPainter(self.image) #Рисовать не на самом виджете, а на изображении
+        if event.buttons() & Qt.LeftButton:
+            painter = QPainter(self.image)  #Рисовать не на самом виджете, а на изображении
+
             # Параметры мыши: цвет, размер, тип линии, вид концов
-            pen = QPen(self.pen_color, self.pen_width, Qt.SolidLine, Qt.RoundCap) 
+            # Выбираем инструмент: рисование или стирание
+            if self.is_eraser:
+                pen = QPen(Qt.white, self.pen_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)  # Белый цвет для ластика
+            else:
+                pen = QPen(self.pen_color, self.pen_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)  # Обычное рисование
+
             painter.setPen(pen)
             painter.drawLine(self.last_point, event.pos())
             self.last_point = event.pos()
@@ -45,11 +52,10 @@ class MainWindow(QMainWindow):
 
         # Создаем основной виджет
         self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-
         # Создаем макет для виджета
         layout = QVBoxLayout(self.central_widget)
-    
+        self.setCentralWidget(self.central_widget)
+
         # Создаем кнопку "Начать" с текстом
         self.button = QPushButton("Начать (выбора нет)", self)
         self.button.setGeometry(100, 100, 200, 50)  # Размеры и позиция кнопки
@@ -76,10 +82,13 @@ class MainWindow(QMainWindow):
         color_button.clicked.connect(self.choose_color)  # Подключаем к методу выбора цвета
         width_button = QPushButton("Выбрать размер", self)
         width_button.clicked.connect(self.chose_width)
+        eraser_button = QPushButton("Выбрать ластик", self)
+        eraser_button.clicked.connect(self.chose_eraser)
 
         # Добавляем кнопки на панель инструментов
         toolbar.addWidget(color_button)
         toolbar.addWidget(width_button)
+        toolbar.addWidget(eraser_button)
 
         # Добавляем панель инструментов в главное окно
         self.addToolBar(toolbar)
@@ -109,6 +118,15 @@ class MainWindow(QMainWindow):
         self.pen_width = value  # Обновляем размер пера на основе значения из QSpinBox
         print(f"Размер пера: {self.pen_width}")
 
+    def chose_eraser(self):
+        """Метод для переключения между рисованием и ластиком"""
+        self.is_eraser = not self.is_eraser  # Переключаем состояние (рисование или ластик)
+
+    def start_drawing(self):
+        """Метод для переключения на холст для рисования"""
+        self.canvas = Canvas(self)
+        self.setCentralWidget(self.canvas)  # Заменяем текущий виджет на холст
+        self.button.setVisible(False)  # Скрываем кнопку после старта рисования
 
 
     # Запуск приложения
