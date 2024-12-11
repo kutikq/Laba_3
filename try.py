@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QColorDialog, QWidget, QVBoxLayout, QToolBar, QHBoxLayout, QSpinBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QColorDialog, QWidget, QVBoxLayout, QToolBar, QHBoxLayout, QSpinBox, QDialog
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPen, QColor, QImage
 import sys
@@ -74,16 +74,21 @@ class MainWindow(QMainWindow):
         self.create_toolbar()
 
     def create_toolbar(self):
+        # Создаём панель инструментов
         toolbar = QToolBar(self)
+        toolbar.setMovable(False)  # Фиксируем панель, чтобы она не перемещалась
+        toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # Задаём стиль кнопок
 
-        # Создаем контейнер для горизонтального размещения кнопок
-        container_layout = QHBoxLayout()
+        # Создаём контейнер для горизонтального размещения кнопок
+        container_widget = QWidget(self)
+        container_layout = QHBoxLayout(container_widget)
+        container_widget.setLayout(container_layout)
 
-        # Создаем действия для панели инструментов
+        # Создаём кнопки
         color_button = QPushButton("Выбрать цвет", self)
-        color_button.clicked.connect(self.choose_color)  # Подключаем к методу выбора цвета
+        color_button.clicked.connect(self.choose_color)
         width_button = QPushButton("Выбрать размер", self)
-        width_button.clicked.connect(self.chose_width)
+        width_button.clicked.connect(self.choose_width)
         eraser_button = QPushButton("Выбрать ластик", self)
         eraser_button.clicked.connect(self.chose_eraser)
 
@@ -92,13 +97,11 @@ class MainWindow(QMainWindow):
         container_layout.addWidget(width_button)
         container_layout.addWidget(eraser_button)
 
-        # Вставляем контейнер с кнопками в панель инструментов
-        container_widget = QWidget(self)
-        container_widget.setLayout(container_layout)
+        # Добавляем контейнер в панель инструментов
         toolbar.addWidget(container_widget)
 
         # Добавляем панель инструментов в главное окно
-        self.addToolBar(toolbar)
+        self.addToolBar(Qt.TopToolBarArea, toolbar)
 
     def choose_color(self):
         color = QColorDialog.getColor(self.pen_color, self)
@@ -106,18 +109,24 @@ class MainWindow(QMainWindow):
             self.pen_color = color  # Обновляем цвет пера
             self.canvas.pen_color = self.pen_color  # Обновляем цвет на холсте
 
-    def chose_width(self):
-        """Метод для создания и отображения QSpinBox для выбора размера пера"""
-        self.size_spinbox = QSpinBox(self)
-        self.size_spinbox.setRange(1, 50)  # Устанавливаем диапазон от 1 до 50
-        self.size_spinbox.setValue(self.pen_width)  # Устанавливаем начальное значение (по умолчанию размер пера 5)
-        
-        # Подключаем событие изменения значения к методу, который обновляет размер пера
-        self.size_spinbox.valueChanged.connect(self.set_pen_size)
+    def choose_width(self):
+        dialog = QDialog(self)  # Диалоговое окно
+        dialog.setWindowTitle("Выберите размер пера")
 
-        # Показываем QSpinBox на экране
-        self.size_spinbox.show()
-    
+        layout = QVBoxLayout(dialog)  # Макет для диалога
+        size_spinbox = QSpinBox(dialog)
+        size_spinbox.setRange(1, 50)
+        size_spinbox.setValue(self.pen_width)
+        layout.addWidget(size_spinbox)
+
+        ok_button = QPushButton("OK", dialog)
+        layout.addWidget(ok_button)
+
+        # Обработчик кнопки OK
+        ok_button.clicked.connect(lambda: (self.set_pen_size(size_spinbox.value()), dialog.close()))
+
+        dialog.exec_()
+
     def set_pen_size(self, value):
         """Метод для обновления размера пера"""
         self.pen_width = value  # Обновляем размер пера на основе значения из QSpinBox
