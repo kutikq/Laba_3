@@ -7,8 +7,6 @@ import sys
 class Canvas(QWidget):
     def __init__(self, parent=None, pen_color=Qt.black, pen_width=5, is_eraser=False):
         super().__init__(parent)
-        self.setAttribute(Qt.WA_StaticContents)
-        self.setFixedSize(1000, 1000)
 
         # Инициализация переменных
         self.image = QImage(self.size(), QImage.Format_RGB32)  # Инициализация пустого изображения
@@ -17,6 +15,13 @@ class Canvas(QWidget):
         self.pen_color = pen_color  # Цвет пера
         self.pen_width = pen_width  # Размер пера
         self.is_eraser = is_eraser  # Инструмент (рисование или ластик)
+
+    def resizeEvent(self, event):
+        """Обработчик изменения размера окна"""
+        # Когда окно изменяет размер, мы обновляем изображение
+        self.image = QImage(self.size(), QImage.Format_RGB32)
+        self.image.fill(Qt.white)  # Сохраняем белый фон
+        super().resizeEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -46,7 +51,7 @@ class Canvas(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setMinimumSize(1000, 800)
+        self.setMinimumSize(250, 200)
 
         # Инициализация переменных для рисования
         self.pen_color = Qt.black  # Начальный цвет пера
@@ -55,20 +60,21 @@ class MainWindow(QMainWindow):
 
         # Создаем основной виджет
         self.central_widget = QWidget(self)
-        # Создаем макет для виджета
         layout = QVBoxLayout(self.central_widget)
         self.setCentralWidget(self.central_widget)
 
-        # Создаем кнопку "Начать" с текстом
+        # Создаем кнопку "Начать"
         self.button = QPushButton("Начать (выбора нет)", self)
-        self.button.setGeometry(100, 100, 200, 50)  # Размеры и позиция кнопки
+        self.button.setGeometry(50, 50, 200, 50)  # Размеры и позиция кнопки
         self.button.clicked.connect(self.start_drawing)
 
     def start_drawing(self):
-        # Метод для переключения на холст для рисования
-        self.canvas = Canvas(self, self.pen_color, self.pen_width, self.is_eraser)  # Передаем параметры в Canvas
-        self.setCentralWidget(self.canvas)  # Заменяем текущий виджет на холст
-        self.button.setVisible(False)  # Скрываем кнопку после старта рисования
+        # Создаем холст и делаем его центральным виджетом
+        self.canvas = Canvas(self, self.pen_color, self.pen_width, self.is_eraser)
+        self.setCentralWidget(self.canvas)
+
+        # Скрываем кнопку "Начать"
+        self.button.setVisible(False)
 
         # Добавляем панель инструментов
         self.create_toolbar()
